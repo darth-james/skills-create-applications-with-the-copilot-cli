@@ -46,9 +46,55 @@ describe('division', () => {
   });
 });
 
+describe('modulo', () => {
+  test('5 % 2 = 1', () => expect(calculate('modulo', 5, 2)).toBe(1));
+  test('evenly divisible', () => expect(calculate('modulo', 10, 5)).toBe(0));
+  test('dividend smaller than divisor', () => expect(calculate('modulo', 2, 5)).toBe(2));
+  test('negative dividend keeps sign', () => expect(calculate('modulo', -5, 2)).toBe(-1));
+  test('negative divisor', () => expect(calculate('modulo', 5, -2)).toBe(1));
+  test('decimals', () => expect(calculate('modulo', 5.5, 2)).toBeCloseTo(1.5));
+  test('% alias', () => expect(calculate('%', 5, 2)).toBe(1));
+  test('modulo by zero throws', () => {
+    expect(() => calculate('modulo', 5, 0)).toThrow('Modulo by zero');
+  });
+});
+
+describe('power', () => {
+  test('2 ^ 3 = 8', () => expect(calculate('power', 2, 3)).toBe(8));
+  test('exponent zero', () => expect(calculate('power', 7, 0)).toBe(1));
+  test('exponent one', () => expect(calculate('power', 7, 1)).toBe(7));
+  test('zero base', () => expect(calculate('power', 0, 5)).toBe(0));
+  test('negative exponent', () => expect(calculate('power', 2, -2)).toBe(0.25));
+  test('negative base, odd exponent', () => expect(calculate('power', -2, 3)).toBe(-8));
+  test('negative base, even exponent', () => expect(calculate('power', -2, 2)).toBe(4));
+  test('fractional exponent', () => expect(calculate('power', 9, 0.5)).toBe(3));
+  test('^ and ** aliases', () => {
+    expect(calculate('^', 2, 3)).toBe(8);
+    expect(calculate('**', 2, 3)).toBe(8);
+  });
+});
+
+describe('square root', () => {
+  test('√16 = 4', () => expect(calculate('sqrt', 16)).toBe(4));
+  test('√0 = 0', () => expect(calculate('sqrt', 0)).toBe(0));
+  test('√1 = 1', () => expect(calculate('sqrt', 1)).toBe(1));
+  test('non-perfect square', () => expect(calculate('sqrt', 2)).toBeCloseTo(1.41421356));
+  test('decimal input', () => expect(calculate('sqrt', 0.25)).toBe(0.5));
+  test('√ alias', () => expect(calculate('√', 16)).toBe(4));
+  test('negative number throws', () => {
+    expect(() => calculate('sqrt', -1)).toThrow('negative');
+  });
+  test('NaN operand throws', () => {
+    expect(() => calculate('sqrt', NaN)).toThrow('valid numbers');
+  });
+  test('missing operand throws', () => {
+    expect(() => calculate('sqrt')).toThrow('valid numbers');
+  });
+});
+
 describe('invalid input', () => {
   test('unknown operation', () => {
-    expect(() => calculate('modulo', 1, 2)).toThrow('Unknown operation');
+    expect(() => calculate('foo', 1, 2)).toThrow('Unknown operation');
   });
   test('NaN operand', () => {
     expect(() => calculate('add', NaN, 2)).toThrow('valid numbers');
@@ -66,6 +112,9 @@ describe('command line', () => {
     [['subtract', '10', '4'], '6'],
     [['multiply', '45', '2'], '90'],
     [['divide', '20', '5'], '4'],
+    [['modulo', '5', '2'], '1'],
+    [['power', '2', '3'], '8'],
+    [['sqrt', '16'], '4'],
   ])('%j prints %s', (args, expected) => {
     expect(execFileSync('node', [CLI, ...args], { encoding: 'utf8' }).trim()).toBe(expected);
   });
@@ -84,6 +133,24 @@ describe('command line', () => {
 
   test('wrong argument count prints usage', () => {
     const r = run('add', '1');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('Usage');
+  });
+
+  test('modulo by zero exits with error', () => {
+    const r = run('modulo', '5', '0');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('Modulo by zero');
+  });
+
+  test('sqrt of negative exits with error', () => {
+    const r = run('sqrt', '-4');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('negative');
+  });
+
+  test('sqrt with two operands prints usage', () => {
+    const r = run('sqrt', '4', '2');
     expect(r.status).toBe(1);
     expect(r.stderr).toContain('Usage');
   });
