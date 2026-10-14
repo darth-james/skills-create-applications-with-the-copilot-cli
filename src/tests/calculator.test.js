@@ -46,9 +46,33 @@ describe('division', () => {
   });
 });
 
+describe('modulo', () => {
+  test('remainder of positive numbers', () => expect(calculate('modulo', 10, 3)).toBe(1));
+  test('negative dividend', () => expect(calculate('modulo', -10, 3)).toBe(-1));
+  test('% alias', () => expect(calculate('%', 10, 3)).toBe(1));
+  test('modulo by zero throws', () => {
+    expect(() => calculate('modulo', 10, 0)).toThrow('Modulo by zero');
+  });
+});
+
+describe('power', () => {
+  test('positive exponent', () => expect(calculate('power', 2, 3)).toBe(8));
+  test('zero exponent', () => expect(calculate('power', 5, 0)).toBe(1));
+  test('negative exponent', () => expect(calculate('power', 2, -2)).toBe(0.25));
+  test('^ alias', () => expect(calculate('^', 2, 3)).toBe(8));
+});
+
+describe('square root', () => {
+  test('square root of a positive number', () => expect(calculate('squareRoot', 9)).toBe(3));
+  test('square root of zero', () => expect(calculate('sqrt', 0)).toBe(0));
+  test('negative number throws', () => {
+    expect(() => calculate('squareRoot', -1)).toThrow('negative number');
+  });
+});
+
 describe('invalid input', () => {
   test('unknown operation', () => {
-    expect(() => calculate('modulo', 1, 2)).toThrow('Unknown operation');
+    expect(() => calculate('unknown', 1, 2)).toThrow('Unknown operation');
   });
   test('NaN operand', () => {
     expect(() => calculate('add', NaN, 2)).toThrow('valid numbers');
@@ -66,6 +90,9 @@ describe('command line', () => {
     [['subtract', '10', '4'], '6'],
     [['multiply', '45', '2'], '90'],
     [['divide', '20', '5'], '4'],
+    [['modulo', '10', '3'], '1'],
+    [['power', '2', '3'], '8'],
+    [['sqrt', '9'], '3'],
   ])('%j prints %s', (args, expected) => {
     expect(execFileSync('node', [CLI, ...args], { encoding: 'utf8' }).trim()).toBe(expected);
   });
@@ -74,6 +101,18 @@ describe('command line', () => {
     const r = run('divide', '1', '0');
     expect(r.status).toBe(1);
     expect(r.stderr).toContain('Division by zero');
+  });
+
+  test('modulo by zero exits with error', () => {
+    const r = run('modulo', '10', '0');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('Modulo by zero');
+  });
+
+  test('square root of a negative number exits with error', () => {
+    const r = run('sqrt', '-1');
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('negative number');
   });
 
   test('non-numeric operand exits with error', () => {
